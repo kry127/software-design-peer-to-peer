@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package ru.itmo.mit.sd.ptpchat;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+enum PeerType {
+    CLIENT = 0;
+    SERVER = 1;
+}
+
+message PeerMessage {
+    string name = 3;
+    string timestamp = 4;
+    string message = 5;
+}
+
+message PeerDescription {
+    int32 ip = 1;
+    int32 port = 2;
+    string name = 3;
+}
+
+service PeerToPeerMessaging {
+    // client establishes connection calling Register: sends it's peer description to server
+    // and server replies with it's own peer description to client so they can communicate
+    rpc Register(PeerDescription) returns(PeerDescription);
+    // same as upper, but can be used to disconnect client from server
+    rpc Unregister(PeerDescription) returns(PeerDescription);
+    // sends message to a server
+    rpc Send(PeerMessage) returns(google.protobuf.Empty);
+    // poll message count available to peer on the server
+    rpc PollMessageCount(google.protobuf.Empty) returns(google.protobuf.Int32Value);
+    // get single message from the server
+    rpc PullMessage(google.protobuf.Empty) returns(PeerMessage);
+}
+
