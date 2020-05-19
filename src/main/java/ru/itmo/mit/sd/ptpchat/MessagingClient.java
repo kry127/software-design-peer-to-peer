@@ -78,7 +78,7 @@ public class MessagingClient {
     }
 
     public boolean unregister() {
-        info("*** register");
+        info("*** unregister");
 
         Message.PeerDescription desc;
         try {

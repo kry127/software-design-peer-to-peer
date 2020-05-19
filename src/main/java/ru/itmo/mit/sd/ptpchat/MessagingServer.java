@@ -122,7 +122,7 @@ public class MessagingServer {
         @Override
         public void register(Message.PeerDescription request, StreamObserver<Message.PeerDescription> responseObserver) {
             logger.info("Register called: " + request.getIp());
-            if (connectedTo != null) {
+            if (connectedTo == null) {
                 connectedTo = request;
                 responseObserver.onNext(serverDescription);
             }
@@ -157,7 +157,6 @@ public class MessagingServer {
 
         @Override
         public void pullMessage(Empty request, StreamObserver<Message.PeerMessage> responseObserver) {
-            super.pullMessage(request, responseObserver);
             logger.info("Pull called: ");
             if (messages.size() == 0) {
                 responseObserver.onCompleted(); // no messages yet
