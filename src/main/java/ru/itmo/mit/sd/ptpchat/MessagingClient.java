@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -42,7 +43,7 @@ public class MessagingClient {
     /**
      * Blocking unary call example.  Calls getFeature and prints the response.
      */
-    public void pollMessageCount() {
+    public int pollMessageCount() {
         info("*** pollMessageCount");
 
         // build request
@@ -53,21 +54,27 @@ public class MessagingClient {
             val = blockingStub.pollMessageCount(request);
         } catch (StatusRuntimeException e) {
             warning("RPC failed: {0}", e.getStatus());
-            return;
+            return 0;
         }
         info(" server responded available messages: {0}", val.getValue());
+        return val.getValue();
     }
 
-    public void register() {
+    public boolean register() {
         info("*** register");
 
         try {
             serverDescription = blockingStub.register(clientDescription);
         } catch (StatusRuntimeException e) {
             warning("RPC failed: {0}", e.getStatus());
-            return;
+            return false;
+        }
+        if (serverDescription == null) {
+            info(" Cannot connect to server: {0}", serverDescription);
+            return false;
         }
         info(" Connected to server: {0}", serverDescription);
+        return true;
     }
 
     public boolean unregister() {
@@ -120,11 +127,29 @@ public class MessagingClient {
     public static void run(String ip, int port, String username) throws InterruptedException {
 
         ManagedChannel channel = ManagedChannelBuilder.forAddress(ip, port).usePlaintext().build();
-        try {
-            MessagingClient client = new MessagingClient(port, Program.ipToInt(ip), username, channel);
 
-            client.pollMessageCount();
+        Scanner sc = new Scanner(System.in);
+
+        MessagingClient client = null;
+        try {
+            client = new MessagingClient(port, Program.ipToInt(ip), username, channel);
+
+            boolean registered = client.register();
+            if (!registered) return;
+
+            while (true) {
+                String line = sc.nextLine();
+                client.send(line);
+
+                int new_msg_count = client.pollMessageCount();
+                for (int k = 0; k < new_msg_count; k++) {
+                    client.pullMessage();
+                }
+            }
         } finally {
+            if (client != null) {
+                client.unregister();
+            }
             channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
         }
     }

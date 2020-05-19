@@ -7,8 +7,10 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -21,6 +23,7 @@ public class MessagingServer {
 
     private final int port;
     private final Server server;
+    private final MessagingService messagingService;
 
     /**
      * Constructs messaging server instance
@@ -37,7 +40,8 @@ public class MessagingServer {
      */
     public MessagingServer(int port, int ip, String username, ServerBuilder<?> serverBuilder) {
         this.port = port;
-        server = serverBuilder.addService(new MessagingService(port, ip, username))
+        this.messagingService = new MessagingService(port, ip, username);
+        server = serverBuilder.addService(messagingService)
                 .build();
     }
 
@@ -71,21 +75,23 @@ public class MessagingServer {
     }
 
     /**
-     * Await termination on the main thread since the grpc library uses daemon threads.
-     */
-    private void blockUntilShutdown() throws InterruptedException {
-        if (server != null) {
-            server.awaitTermination();
-        }
-    }
-
-    /**
      * Ad-hoc method to easily launch server in IDE. Should not be used in production code
      */
     public static void run(int ip, int port, String user) throws IOException, InterruptedException {
         MessagingServer server = new MessagingServer(port, ip, user);
         server.start();
-        server.blockUntilShutdown();
+
+        Scanner sc = new Scanner(System.in);
+        while (true) {
+            String line = sc.nextLine();
+            server.pushMessage(line);
+        }
+    }
+
+    void pushMessage(String line) {
+        Message.PeerMessage msg;
+        msg = Message.PeerMessage.newBuilder().setMessage(line).setTimestamp(String.valueOf(new Date())).build();
+        messagingService.pushMessage(msg);
     }
 
     /**
@@ -107,8 +113,10 @@ public class MessagingServer {
             messages = new LinkedList<>();
         }
 
-        void pushMessage(Message.PeerMessage msg) {
-            messages.add(msg);
+        public void pushMessage(Message.PeerMessage msg) {
+            if (connectedTo != null) {
+                messages.add(msg);
+            }
         }
 
         @Override
