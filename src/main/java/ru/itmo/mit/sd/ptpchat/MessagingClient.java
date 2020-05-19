@@ -117,21 +117,11 @@ public class MessagingClient {
     }
 
     /** Issues several different requests and then exits. */
-    public static void main(String[] args) throws InterruptedException {
-        String target = "localhost:8980";
-        if (args.length > 0) {
-            if ("--help".equals(args[0])) {
-                System.err.println("Usage: [target]");
-                System.err.println("");
-                System.err.println("  target  The server to connect to. Defaults to " + target);
-                System.exit(1);
-            }
-            target = args[0];
-        }
+    public static void run(String ip, int port, String username) throws InterruptedException {
 
-        ManagedChannel channel = ManagedChannelBuilder.forTarget(target).usePlaintext().build();
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(ip, port).usePlaintext().build();
         try {
-            MessagingClient client = new MessagingClient(8980, Program.ipToInt(127,0,0,1), "vasya", channel);
+            MessagingClient client = new MessagingClient(port, Program.ipToInt(ip), username, channel);
 
             client.pollMessageCount();
         } finally {

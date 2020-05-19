@@ -82,9 +82,8 @@ public class MessagingServer {
     /**
      * Ad-hoc method to easily launch server in IDE. Should not be used in production code
      */
-    @Deprecated
-    public static void main(String[] args) throws Exception {
-        MessagingServer server = new MessagingServer(8980, Program.ipToInt(127, 0, 0, 1), "server_user");
+    public static void run(int ip, int port, String user) throws IOException, InterruptedException {
+        MessagingServer server = new MessagingServer(port, ip, user);
         server.start();
         server.blockUntilShutdown();
     }
