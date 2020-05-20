@@ -83,8 +83,11 @@ public class MessagingServer {
 
         Scanner sc = new Scanner(System.in);
         while (true) {
-            String line = sc.nextLine();
-            server.pushMessage(line);
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                server.pushMessage(line);
+            }
+
         }
     }
 
@@ -150,7 +153,8 @@ public class MessagingServer {
         @Override
         public void pollMessageCount(Empty request, StreamObserver<Int32Value> responseObserver) {
 //            super.pollMessageCount(request, responseObserver);
-            logger.info("Poll called: ");
+            if (messages.size() != 0)
+                logger.info("Poll called: ");
             responseObserver.onNext(toInt32Value(messages.size()));
             responseObserver.onCompleted();
         }
